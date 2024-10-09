@@ -1,6 +1,8 @@
 # ethsofia_hackaton
 Repository for ETHSofia 17-19 Oct Hackaton
 
+`cd examples/yahoo && cargo build --target wasm32-wasi --release`
+
 
 Register at
 https://coinmarketcap.com/api/pricing/
