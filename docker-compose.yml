@@ -52,12 +52,16 @@ services:
       anvil-b:
         condition: service_healthy
 
-  reporter-a:
+  reporter:
     image: ymadzhunkov/blocksense_hackaton:reporter
     networks:
       - backend
     volumes:
       - ./examples/yahoo:/usr/local/blocksense/oracles/yahoo
+      - ./examples/revolut:/usr/local/blocksense/oracles/revolut
+      - ./examples/cmc:/usr/local/blocksense/oracles/cmc
+        #entrypoint: ["docker-entrypoint.sh", "postgres"]
+    entrypoint: ['/bin/sh', '-c', 'cd /usr/local/blocksense/oracles/revolut && /spin up']
 
     depends_on:
       sequencer:

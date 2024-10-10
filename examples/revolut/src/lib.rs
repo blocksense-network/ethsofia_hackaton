@@ -24,7 +24,7 @@ async fn oracle_request(settings: Settings) -> Result<Payload> {
         "USD/ETH" => Url::parse("https://www.revolut.com/api/quote/public/ETHUSD")?,
         &_ => todo!(),
     };
-    println!("URL - {}", url.as_str());
+    println!("REVOLUT URL - {}", url.as_str());
     let mut req = Request::builder();
     req.method(Method::Get);
     req.uri(url);
@@ -38,7 +38,7 @@ async fn oracle_request(settings: Settings) -> Result<Payload> {
     let string = String::from_utf8(body).expect("Our bytes should be valid utf8");
     let value: Rate = serde_json::from_str(&string).unwrap();
 
-    println!("{:?}", value);
+    println!("REVOLUT {:?}", value);
     let mut payload: Payload = Payload::new();
     payload.values.push(DataFeedResult {
         id: data_feed.id.clone(),
