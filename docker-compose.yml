@@ -61,8 +61,8 @@ services:
       - ./examples/revolut:/usr/local/blocksense/oracles/revolut
       - ./examples/cmc:/usr/local/blocksense/oracles/cmc
     #entrypoint: ['/bin/sh', '-c', 'cd /usr/local/blocksense/oracles/revolut && /spin up']
-    #entrypoint: ['/bin/sh', '-c', 'cd /usr/local/blocksense/oracles/yahoo && /spin up']
-    entrypoint: ['/bin/sh', '-c', 'cd /usr/local/blocksense/oracles/cmc && /spin up']
+    entrypoint: ['/bin/sh', '-c', 'cd /usr/local/blocksense/oracles/yahoo && /spin up']
+    #entrypoint: ['/bin/sh', '-c', 'cd /usr/local/blocksense/oracles/cmc && /spin up']
 
     depends_on:
       sequencer:

@@ -94,7 +94,7 @@ async fn oracle_request(settings: Settings) -> Result<Payload> {
     req.uri(url);
 
     // Please provide your own API key until capabilities are implemented.
-    let mut private_key: String = fs::read_to_string("/X-CMC_PRO_API_KEY")?;
+    let mut private_key: String = fs::read_to_string("/CMC_API_KEY")?;
     trim_newline(&mut private_key);
     // println!("Using private key for CoinMarketCap `{}`", &private_key);
     req.header("X-CMC_PRO_API_KEY", &private_key);
