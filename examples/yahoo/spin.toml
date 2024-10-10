@@ -30,5 +30,8 @@ source = "target/wasm32-wasi/release/yahoo_oracle.wasm"
 allowed_outbound_hosts = [
   "https://yfapi.net:443",
 ]
+files = [{ source = ".spin", destination = "/" }]
+
+
 [component.yahoo.build]
 command = "cargo build --target wasm32-wasi --release"

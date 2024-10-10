@@ -30,6 +30,7 @@ source = "target/wasm32-wasi/release/cmc_oracle.wasm"
 allowed_outbound_hosts = [
   "https://pro-api.coinmarketcap.com",
 ]
+files = [{ source = ".spin", destination = "/" }]
 
 [component.coinmarketcap.build]
 command = "cargo build --target wasm32-wasi --release"
