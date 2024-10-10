@@ -27,15 +27,22 @@ services:
       retries: 1
 
   sequencer:
-    image: ymadzhunkov/blocksense_hackaton:blocksense
+    image: ymadzhunkov/blocksense_hackaton:sequencer
     ports:
       - '8877:8877'
       - '5555:5555'
       - '5556:5556'
+    volumes:
+      - ./config/feeds_config.json:/usr/local/blocksense/feeds_config.json
+
     networks:
       - backend
     healthcheck:
-      test: [CMD-SHELL, 'wget http://0.0.0.0:8877 2>&1 | grep -c "ERROR 404: Not Found" > /dev/null']
+      test:
+        [
+          CMD-SHELL,
+          'wget http://0.0.0.0:8877 2>&1 | grep -c "ERROR 404: Not Found" > /dev/null',
+        ]
       interval: 5s
       timeout: 5s
       retries: 1
@@ -46,23 +53,15 @@ services:
         condition: service_healthy
 
   reporter-a:
-    image: ymadzhunkov/blocksense_hackaton:blocksense
-    entrypoint: ['/bin/sh', '-c', 'RUST_LOG=debug launch_reporter']
+    image: ymadzhunkov/blocksense_hackaton:reporter
     networks:
       - backend
     volumes:
-      - ./config/private/CMC_API_KEY:/usr/local/blocksense/apps/reporter/CMC_API_KEY
-      - ./config/private/YH_FINANCE_API_KEY:/usr/local/blocksense/apps/reporter/YH_FINANCE_API_KEY
+      - ./examples/yahoo:/usr/local/blocksense/oracles/yahoo
+
     depends_on:
       sequencer:
         condition: service_healthy
-
-  hello-world:
-    image: crccheck/hello-world
-    ports:
-      - '8000:8000'
-    networks:
-      - backend
 
 networks:
   backend:

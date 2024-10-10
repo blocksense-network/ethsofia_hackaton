@@ -1,0 +1,72 @@
+{
+  "feeds": [
+    {
+      "id": 31,
+      "name": "BTC",
+      "fullName": "",
+      "description": "BTC / USD",
+      "decimals": 8,
+      "report_interval_ms": 30000,
+      "quorum_percentage": 1,
+      "type": "Crypto",
+      "script": "CoinMarketCap",
+      "pair": {
+        "base": "BTC",
+        "quote": "USD"
+      },
+      "first_report_start_time": {
+        "secs_since_epoch": 0,
+        "nanos_since_epoch": 0
+      },
+      "resources": {
+        "cmc_id": 1,
+        "cmc_quote": "BTC"
+      }
+    },
+    {
+      "id": 47,
+      "name": "ETH",
+      "fullName": "",
+      "description": "ETH / USD",
+      "decimals": 8,
+      "report_interval_ms": 30000,
+      "quorum_percentage": 1,
+      "type": "Crypto",
+      "script": "CoinMarketCap",
+      "pair": {
+        "base": "ETH",
+        "quote": "USD"
+      },
+      "first_report_start_time": {
+        "secs_since_epoch": 0,
+        "nanos_since_epoch": 0
+      },
+      "resources": {
+        "cmc_id": 1027,
+        "cmc_quote": "ETH"
+      }
+    },
+    {
+      "id": 253,
+      "name": "EUR",
+      "fullName": "Euro",
+      "description": "EUR / USD",
+      "decimals": 8,
+      "report_interval_ms": 30000,
+      "quorum_percentage": 1,
+      "type": "Forex",
+      "script": "YahooFinance",
+      "pair": {
+        "base": "EUR",
+        "quote": "USD"
+      },
+      "first_report_start_time": {
+        "secs_since_epoch": 0,
+        "nanos_since_epoch": 0
+      },
+      "resources": {
+        "yf_symbol": "EURUSD=X"
+      }
+    }
+  ]
+}
