@@ -2,7 +2,8 @@ name: blocksense-hackaton
 services:
   anvil-a:
     image: ghcr.io/foundry-rs/foundry:nightly-0688b5ad19a637303c038d1a66aec62a73713e20
-    entrypoint: ['sh', '-c', 'anvil -p 8545 --host 0.0.0.0']
+    entrypoint: [ 'sh', '-c', 'anvil -p 8545 --host 0.0.0.0 --fork-url "wss://ethereum-sepolia-rpc.publicnode.com" --chain-id 99999999999' ]
+
     ports:
       - '8545:8545'
     networks:
@@ -15,7 +16,7 @@ services:
 
   anvil-b:
     image: ghcr.io/foundry-rs/foundry:nightly-0688b5ad19a637303c038d1a66aec62a73713e20
-    entrypoint: ['sh', '-c', 'anvil -p 8546 --host 0.0.0.0']
+    entrypoint: [ 'sh', '-c', 'anvil -p 8546 --host 0.0.0.0 --fork-url "wss://ethereum-sepolia-rpc.publicnode.com" --chain-id 99999999999' ]
     ports:
       - '8546:8546'
     networks:
@@ -38,17 +39,41 @@ services:
     networks:
       - backend
     healthcheck:
-      test:
-        [
-          CMD-SHELL,
-          'wget http://0.0.0.0:8877 2>&1 | grep -c "ERROR 404: Not Found" > /dev/null',
-        ]
+      test: [ CMD-SHELL, 'wget http://0.0.0.0:8877 2>&1 | grep -c "ERROR 404: Not Found" > /dev/null' ]
       interval: 5s
       timeout: 5s
       retries: 1
     depends_on:
       anvil-a:
         condition: service_healthy
+      anvil-b:
+        condition: service_healthy
+      scdeploy-a:
+        condition: service_completed_successfully
+      scdeploy-b:
+        condition: service_completed_successfully
+
+  scdeploy-a:
+    image: ymadzhunkov/blocksense_hackaton:scdeploy
+    environment:
+      - RPC_URL_LOCAL=http://anvil-a:8545
+    volumes:
+      - ./config/feeds_config.json:/usr/local/blocksense/config/feeds_config.json
+    networks:
+      - backend
+    depends_on:
+      anvil-a:
+        condition: service_healthy
+
+  scdeploy-b:
+    image: ymadzhunkov/blocksense_hackaton:scdeploy
+    environment:
+      - RPC_URL_LOCAL=http://anvil-b:8546
+    volumes:
+      - ./config/feeds_config.json:/usr/local/blocksense/config/feeds_config.json
+    networks:
+      - backend
+    depends_on:
       anvil-b:
         condition: service_healthy
 
@@ -60,7 +85,7 @@ services:
       - ./examples/yahoo:/usr/local/blocksense/oracles/yahoo
       - ./examples/revolut:/usr/local/blocksense/oracles/revolut
       - ./examples/cmc:/usr/local/blocksense/oracles/cmc
-    entrypoint: ['/bin/sh', '-c', 'cd /usr/local/blocksense/oracles/revolut && /spin up']
+    entrypoint: [ '/bin/sh', '-c', 'cd /usr/local/blocksense/oracles/revolut && /spin up' ]
     #entrypoint: ['/bin/sh', '-c', 'cd /usr/local/blocksense/oracles/yahoo && /spin up']
     #entrypoint: ['/bin/sh', '-c', 'cd /usr/local/blocksense/oracles/cmc && /spin up']
 
