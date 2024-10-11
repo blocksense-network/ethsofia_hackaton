@@ -1,6 +1,6 @@
 use anyhow::Result;
 use blocksense_sdk::{
-    oracle::{DataFeedResult, Payload, Settings},
+    oracle::{DataFeedResult, DataFeedResultValue, Payload, Settings},
     oracle_component,
     spin::http::{send, Method, Request, Response},
 };
@@ -24,7 +24,7 @@ async fn oracle_request(settings: Settings) -> Result<Payload> {
         "USD/ETH" => Url::parse("https://www.revolut.com/api/quote/public/ETHUSD")?,
         &_ => todo!(),
     };
-    println!("REVOLUT URL - {}", url.as_str());
+    println!("URL - {}", url.as_str());
     let mut req = Request::builder();
     req.method(Method::Get);
     req.uri(url);
@@ -38,11 +38,11 @@ async fn oracle_request(settings: Settings) -> Result<Payload> {
     let string = String::from_utf8(body).expect("Our bytes should be valid utf8");
     let value: Rate = serde_json::from_str(&string).unwrap();
 
-    println!("REVOLUT {:?}", value);
+    println!("{:?}", value);
     let mut payload: Payload = Payload::new();
     payload.values.push(DataFeedResult {
         id: data_feed.id.clone(),
-        value: value.rate,
+        value: DataFeedResultValue::Numerical(value.rate),
     });
     Ok(payload)
 }
