@@ -1,6 +1,6 @@
 use anyhow::Result;
 use blocksense_sdk::{
-    oracle::{DataFeedResult, Payload, Settings},
+    oracle::{DataFeedResult, DataFeedResultValue, Payload, Settings},
     oracle_component,
     spin::http::{send, Method, Request, Response},
 };
@@ -9,8 +9,6 @@ use std::collections::HashMap;
 use serde::Deserialize;
 use serde_json::Value;
 use url::Url;
-
-use std::fs;
 
 #[allow(dead_code)]
 #[derive(Default, Debug, Clone, PartialEq, Deserialize)]
@@ -65,15 +63,6 @@ pub struct CmcResource {
     pub cmc_quote: String,
 }
 
-fn trim_newline(s: &mut String) {
-    if s.ends_with('\n') {
-        s.pop();
-        if s.ends_with('\r') {
-            s.pop();
-        }
-    }
-}
-
 #[oracle_component]
 async fn oracle_request(settings: Settings) -> Result<Payload> {
     let mut resources: HashMap<String, CmcResource> = HashMap::new();
@@ -92,12 +81,19 @@ async fn oracle_request(settings: Settings) -> Result<Payload> {
     let mut req = Request::builder();
     req.method(Method::Get);
     req.uri(url);
+    //TODO(adikov): Implement API key as capability of the reporter and add it to the header
+    //in the oracle trigger
 
     // Please provide your own API key until capabilities are implemented.
-    let mut private_key: String = fs::read_to_string("/CMC_API_KEY")?;
-    trim_newline(&mut private_key);
-    // println!("Using private key for CoinMarketCap `{}`", &private_key);
-    req.header("X-CMC_PRO_API_KEY", &private_key);
+    req.header(
+        "X-CMC_PRO_API_KEY",
+        settings
+            .capabilities
+            .first()
+            .expect("We expect only one capability.")
+            .data
+            .clone(),
+    );
     req.header("Accepts", "application/json");
 
     let req = req.build();
@@ -106,24 +102,31 @@ async fn oracle_request(settings: Settings) -> Result<Payload> {
     let body = resp.into_body();
     let string = String::from_utf8(body)?;
     let value: Root = serde_json::from_str(&string)?;
+    println!("CMC Response = `{}`", &string);
     let mut payload: Payload = Payload::new();
 
     for (feed_id, data) in resources.iter() {
         payload.values.push(match value.data.get(&data.cmc_id) {
-            Some(cmc) => DataFeedResult {
-                id: feed_id.clone(),
-                value: cmc
-                    .quote
-                    .get("USD")
-                    .unwrap_or(&CmcValue { price: 0.0 })
-                    .price,
-            },
-            None => {
-                println!("CMC data feed with id {} is not found", data.cmc_id);
-                //TODO: Start reporting error.
+            Some(cmc) => {
+                let value = if let Some(&CmcValue { price }) = cmc.quote.get("USD") {
+                    DataFeedResultValue::Numerical(price)
+                } else {
+                    DataFeedResultValue::Error(format!(
+                        "No price in USD for data feed with id {}",
+                        data.cmc_id
+                    ))
+                };
+
                 DataFeedResult {
                     id: feed_id.clone(),
-                    value: 0.0,
+                    value,
+                }
+            }
+            None => {
+                let error = format!("CMC data feed with id {} is not found", data.cmc_id);
+                DataFeedResult {
+                    id: feed_id.clone(),
+                    value: DataFeedResultValue::Error(error),
                 }
             }
         });

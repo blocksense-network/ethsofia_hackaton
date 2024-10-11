@@ -1,6 +1,6 @@
 use anyhow::Result;
 use blocksense_sdk::{
-    oracle::{DataFeedResult, Payload, Settings},
+    oracle::{DataFeedResult, DataFeedResultValue, Payload, Settings},
     oracle_component,
     spin::http::{send, Method, Request, Response},
 };
@@ -10,12 +10,10 @@ use serde::Deserialize;
 use serde_json::Value;
 use url::Url;
 
-use std::fs;
-
 #[derive(Default, Debug, Clone, PartialEq, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Root {
-    pub quote_response: QuoteResponse,
+    pub quote_response: Option<QuoteResponse>,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Deserialize)]
@@ -36,15 +34,6 @@ pub struct YahooResult {
 #[derive(Default, Debug, Clone, PartialEq, Deserialize)]
 pub struct YahooResource {
     pub yf_symbol: String,
-}
-
-fn trim_newline(s: &mut String) {
-    if s.ends_with('\n') {
-        s.pop();
-        if s.ends_with('\r') {
-            s.pop();
-        }
-    }
 }
 
 #[oracle_component]
@@ -69,10 +58,15 @@ async fn oracle_request(settings: Settings) -> Result<Payload> {
     //in the oracle trigger
 
     // Please provide your own API key until capabilities are implemented.
-    let mut private_key: String = fs::read_to_string("/YH_FINANCE_API_KEY")?;
-    trim_newline(&mut private_key);
-    // println!("Using private key for Yahoo finance `{}`", &private_key);
-    req.header("x-api-key", &private_key);
+    req.header(
+        "x-api-key",
+        settings
+            .capabilities
+            .first()
+            .expect("We expect only one capability.")
+            .data
+            .clone(),
+    );
     req.header("Accepts", "application/json");
 
     let req = req.build();
@@ -80,41 +74,51 @@ async fn oracle_request(settings: Settings) -> Result<Payload> {
 
     let body = resp.into_body();
     let string = String::from_utf8(body)?;
-    let mut value: Root = serde_json::from_str(&string)?;
+    let value: Root = serde_json::from_str(&string)?;
 
     let mut payload: Payload = Payload::new();
+    let mut quote_response = value
+        .quote_response
+        .ok_or(anyhow::anyhow!("No Yahoo response."))?;
 
     for (feed_id, data) in resources.iter() {
-        let position = value
-            .quote_response
+        let position = quote_response
             .result
             .iter()
             .position(|yahoo_result| data.yf_symbol == yahoo_result.symbol);
         payload.values.push(match position {
             Some(index) => {
-                let yahoo = value.quote_response.result.swap_remove(index);
+                let yahoo = quote_response.result.swap_remove(index);
+                let value = if let Some(price) = yahoo.regular_market_price {
+                    DataFeedResultValue::Numerical(price)
+                } else if let Some(price) = yahoo.regular_market_previous_close {
+                    DataFeedResultValue::Numerical(price)
+                } else {
+                    DataFeedResultValue::Error(format!(
+                        "No price for data feed with id {}",
+                        feed_id
+                    ))
+                };
                 DataFeedResult {
                     id: feed_id.clone(),
-                    value: yahoo
-                        .regular_market_price
-                        .unwrap_or(yahoo.regular_market_previous_close.unwrap_or(0.0)),
+                    value,
                 }
             }
             None => {
-                println!(
+                let error = format!(
                     "Yahoo data feed with symbol {} is not found",
                     data.yf_symbol
                 );
                 //TODO: Start reporting error.
                 DataFeedResult {
                     id: feed_id.clone(),
-                    value: 0.0,
+                    value: DataFeedResultValue::Error(error),
                 }
             }
         });
     }
 
-    for yahoo in value.quote_response.result.iter() {
+    for yahoo in quote_response.result.iter() {
         println!(
             "Yahoo response with symbol {} wasn't consumed",
             yahoo.symbol

@@ -9,6 +9,7 @@ version = "0.1.0"
 interval_time_in_seconds = 10
 sequencer = "http://sequencer:8877/post_report"
 secret_key = "536d1f9d97166eba5ff0efb8cc8dbeb856fb13d2d126ed1efc761e9955014003"
+reporter_id = 0
 
 [[trigger.oracle]]
 component = "coinmarketcap"
@@ -25,12 +26,15 @@ id = "47"
 data = '{"cmc_id":20641,"cmc_quote":"EURC"}'
 id = "253"
 
+[[trigger.oracle.capabilities]]
+data = "00000000-0000-0000-0000-000000000000"
+id = "CMC_API_KEY"
+
 [component.coinmarketcap]
 source = "target/wasm32-wasi/release/cmc_oracle.wasm"
 allowed_outbound_hosts = [
   "https://pro-api.coinmarketcap.com",
 ]
-files = [{ source = ".spin", destination = "/" }]
 
 [component.coinmarketcap.build]
 command = "cargo build --target wasm32-wasi --release"
