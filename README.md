@@ -2,13 +2,19 @@
 
 
 ## To run wasm yahoo repoter you need to build it:
-`cd examples/yahoo && cargo build --target wasm32-wasi --release`
+`cd examples/yahoo && cargo update && cargo build --target wasm32-wasi --release`
 
 Register at
 https://financeapi.net/#:~:text=Real%20time%20low%20latency%20Finance%20API%20for%20stock%20market,%20crypto
 and paste API key in this directory in file:
 
-`examples/yahoo/.spin/YH_FINANCE_API_KEY`
+`examples/yahoo/spin.toml` in section:
+
+```
+[[trigger.oracle.capabilities]]
+data = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+id = "YAHOO_API_KEY"
+```
 
 
 Enable yahoo entripoint in docker-compose.yml
