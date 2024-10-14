@@ -1,7 +1,70 @@
 # Repository for ETHSofia 17-19 Oct Hackaton
 
+## Adding a new Oracle Script
 
-## To run wasm yahoo repoter you need to build it:
+To create an oracle script you must create a new Rust project with cargo
+
+```cargo new --lib my_oracle```
+
+Open `./my_oracle/Cargo.toml` and under `[lib]` add the crate type - `crate-type = ["cdylib"]`
+
+the following two dependencies should be included - 
+```
+wit-bindgen = "0.16.0"
+blocksense-sdk = { git = "https://github.com/blocksense-network/sdk.git" }
+```
+
+After this your Cargo.toml should look like this - 
+
+```
+[package]
+name = "my_oracle"
+authors = ["Participant"]
+description = ""
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wit-bindgen = "0.16.0"
+blocksense-sdk = { git = "https://github.com/blocksense-network/sdk.git" }
+```
+
+in the command-line use `cargo add` to add new libraries in your project.
+
+Once you create your script to build the project run - 
+
+`cargo update && cargo build --target wasm32-wasi --release`
+
+To make your project visible in the docker container open `docker-compose.yml` in the root of the project
+
+include your new oracle script in the reporter section with the correct path - it should look like this -
+
+```
+reporter:
+    image: ymadzhunkov/blocksense_hackaton:reporter
+    networks:
+      - backend
+    volumes:
+      - ./examples/my_oracle:/usr/local/blocksense/oracles/my_oracle
+    entrypoint: ['/bin/sh', '-c', 'cd /usr/local/blocksense/oracles/my_oracle && /spin up']
+
+    depends_on:
+      sequencer:
+        condition: service_healthy
+```
+
+After that run `docker compose up` to launch the system.
+
+If you've made any changes to the scrit you need to rebuild the wasm binaries before launching -
+
+`cargo build --target wasm32-wasi --release && docker compose up`
+
+## Running an available Oracle Script
+
+### To run wasm yahoo repoter you need to build it:
 `cd examples/yahoo && cargo update && cargo build --target wasm32-wasi --release`
 
 Register at
@@ -66,27 +129,21 @@ anvil-a-1  |     Block Time: "Thu, 10 Oct 2024 08:43:00 +0000"
 anvil-a-1  | 
 ```
 
-## Using a similar approach you can use CoinMarketCap wasm repoter
-
+### Using a similar approach you can use CoinMarketCap wasm repoter
 
 To run wasm yahoo repoter you need to build it:
 `cd examples/cmc && cargo build --target wasm32-wasi --release`
 
 Add CoinMarketCap key from this registration
 
-
-
 Register at https://coinmarketcap.com/api/pricing/ and paste API key in this directory in file
 
 `examples/cmc/.spin/CMC_API_KEY`
 
-Enable yahoo entripoint in docker-compose.yml
+Enable yahoo entrypoint in docker-compose.yml
 `entrypoint: ['/bin/sh', '-c', 'cd /usr/local/blocksense/oracles/cmc && /spin up']`
 
 Start docker compose which start 2 anvil instances, one sequencer and yahoo reporter
 `docker compose up`
 
 If everything is setup correctly you will see anvil repoting published transactions.
-
-
-
