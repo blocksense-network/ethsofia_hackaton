@@ -34,13 +34,15 @@ blocksense-sdk = { git = "https://github.com/blocksense-network/sdk.git" }
 
 in the command-line use `cargo add` to add new libraries in your project.
 
+## Building a new Oracle Script
+
 Once you create your script to build the project run - 
 
 `cargo update && cargo build --target wasm32-wasi --release`
 
 To make your project visible in the docker container open `docker-compose.yml` in the root of the project
 
-include your new oracle script in the reporter section with the correct path - it should look like this -
+include your new oracle script in the reporter section with the correct path, it should look like this -
 
 ```
 reporter:
@@ -58,7 +60,7 @@ reporter:
 
 After that run `docker compose up` to launch the system.
 
-If you've made any changes to the scrit you need to rebuild the wasm binaries before launching -
+If you've made any changes to the script you need to rebuild the wasm binaries before launching -
 
 `cargo build --target wasm32-wasi --release && docker compose up`
 
