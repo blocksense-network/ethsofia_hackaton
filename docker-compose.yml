@@ -28,7 +28,7 @@ services:
       retries: 1
 
   sequencer:
-    image: ymadzhunkov/blocksense_hackaton:sequencer
+    image: ymadzhunkov/blocksense_hackaton:sequencer-mac
     ports:
       - '8877:8877'
       - '5555:5555'
@@ -54,7 +54,7 @@ services:
         condition: service_completed_successfully
 
   scdeploy-a:
-    image: ymadzhunkov/blocksense_hackaton:scdeploy
+    image: ymadzhunkov/blocksense_hackaton:scdeploy-mac
     environment:
       - RPC_URL_LOCAL=http://anvil-a:8545
     volumes:
@@ -66,7 +66,7 @@ services:
         condition: service_healthy
 
   scdeploy-b:
-    image: ymadzhunkov/blocksense_hackaton:scdeploy
+    image: ymadzhunkov/blocksense_hackaton:scdeploy-mac
     environment:
       - RPC_URL_LOCAL=http://anvil-b:8546
     volumes:
@@ -78,7 +78,7 @@ services:
         condition: service_healthy
 
   reporter:
-    image: ymadzhunkov/blocksense_hackaton:reporter
+    image: ymadzhunkov/blocksense_hackaton:reporter-mac
     networks:
       - backend
     volumes:
