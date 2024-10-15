@@ -51,7 +51,7 @@ sequencer-1   | 2024-10-15T14:57:08.291861Z DEBUG feed_registry::types: Accepted
 
 Next step is to change the oracle script in the reporter with more sophisticated one. Which uses Yahoo finance with your private API key
 
-Register at [Yahoo finance API](https://financeapi.net/#:~:text=Real%20time%20low%20latency%20Finance%20API%20for%20stock%20market,%20crypto) and paste API key in this directory in file:
+Register at [Yahoo finance API](https://financeapi.net/dashboard) and paste API key in this directory in file:
  
 
 `examples/yahoo/spin.toml` in section:
