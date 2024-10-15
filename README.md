@@ -183,7 +183,7 @@ Register at https://coinmarketcap.com/api/pricing/ and paste API key in this dir
 
   
 
-`examples/cmc/.spin/CMC_API_KEY`
+`examples/cmc/spin.toml`
 
   
 
