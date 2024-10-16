@@ -1,33 +1,55 @@
-
 # Repository for ETHSofia 17-19 Oct Hackaton
-
-  
 
 Welcome to ETHSofia 17-19 Oct Hackaton. To participate in hackaton you need to setup blocksense network in your local machine.
 
 Install git, [docker compose](https://docs.docker.com/compose/install/) & [rust](https://www.rust-lang.org/tools/install). Currently we only support rust for writing oracle scripts. It's technologically possible to use other languages, but this is out of the scope for this hackaton because our SDK is only available for rust. So you need to get rusty !
 Your first goal is to run one of our oracle script to verify all services are running and set up correctly.
 
-First download out pre-build images with following command
-For Mac users you need to switch to `mac_images` branch. All the instructions apply for Mac & Linux.
+1. Clone this repository:
 
-`docker compose pull` 
-Make sure you have rust compiler:
-`cargo -V`
-with wasm32-wasi target
-`rustup target add wasm32-wasi`
+   ```bash
+   git clone git@github.com:blocksense-network/ethsofia_hackaton.git
+   ```
+
+   or
+
+   ```bash
+   git clone https://github.com/blocksense-network/ethsofia_hackaton.git
+   ```
+
+> [!IMPORTANT]
+> For Mac users you need to switch to `mac_images` branch. All the instructions apply for Mac & Linux.
+
+2. Then download out pre-build images with following command
+
+   ```bash
+   docker compose pull
+   ```
+
+3. Make sure you have rust compiler with wasm32-wasi target:
+
+   ```bash
+   cargo -V
+   rustup target add wasm32-wasi
+   ```
 
 ## Running an available Oracle Script
-  
 
-### To run wasm yahoo repoter you need to build it:
+### Run wasm revolut reporter
 
-`cd examples/revolut && cargo update && cargo build --target wasm32-wasi --release`
+To run wasm revolut reporter you need to build it:
 
-Go to root directory of this repository and start all the containers:
-`docker compose up`
+```bash
+cd examples/revolut && cargo update && cargo build --target wasm32-wasi --release`
+```
 
-This will launch 2 local ETH blockchains (anvil), blocksense sequencer service with is responsible for publishing oracle scripts data feeds to the ETH blockchain and one reporter which will execute your oracle script and push it's data feed to sequencer. 
+Now go to root directory of this repository and start all the containers:
+
+```bash
+docker compose up
+```
+
+This will launch 2 local ETH blockchains (anvil), blocksense sequencer service which is responsible for publishing oracle scripts data feeds to the ETH blockchain and one reporter which will execute your oracle script and push its data feed to sequencer.
 
 ```mermaid
 sequenceDiagram
@@ -38,52 +60,59 @@ Reporter ->> Sequencer: post oracle data feed [ 10 sec]
 Reporter ->> Sequencer: post oracle data feed [ 10 sec]
 Reporter ->> Sequencer: post oracle data feed [ 10 sec]
 ```
-The system is design to handle many decentralized oracles, but for this hackaton we will use only one reporter that executes one oracle script.
+
+The system is designed to handle many decentralized oracles, but for this hackaton we will use only one reporter that executes one oracle script.
 If everything works correctly you will have one oracle script that reports one price feed. In the docker compose output you can see something like:
 
-```
+```log
 sequencer-1   | 2024-10-15T14:57:08.291818Z DEBUG sequencer::http_handlers::data_feeds: Recvd result from reporter[0]: Numerical(64680.51629596154)
 sequencer-1   | 2024-10-15T14:57:08.291843Z DEBUG sequencer::http_handlers::data_feeds: getting feed_id = 31
 sequencer-1   | 2024-10-15T14:57:08.291861Z DEBUG feed_registry::types: Accepted report!
 ```
-  
+
 ---
+
+### Run wasm yahoo reporter
 
 Next step is to change the oracle script in the reporter with more sophisticated one. Which uses Yahoo finance with your private API key
 
-Register at [Yahoo finance API](https://financeapi.net/dashboard) and paste API key in this directory in file:
- 
+Register at [Yahoo finance API](https://financeapi.net/dashboard) and paste the API key in this directory in file:
 
 `examples/yahoo/spin.toml` in section:
- 
 
-```
-
+```toml
 [[trigger.oracle.capabilities]]
-
 data = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-
 id = "YAHOO_API_KEY"
-
 ```
 
-`cd examples/yahoo && cargo update && cargo build --target wasm32-wasi --release`
- 
- Go to main directory in the repository and enable yahoo entrypoint in docker-compose.yml
+Now build the yahoo reporter:
 
-`entrypoint: ['/bin/sh', '-c', 'cd /usr/local/blocksense/oracles/yahoo && /spin up']`
- 
+```bash
+cd examples/yahoo && cargo update && cargo build --target wasm32-wasi --release
+```
 
-Start docker compose which start 2 anvil instances, one sequencer and yahoo reporter
-`docker compose down`
-`docker compose up`
-  
+Go to the main directory in the repository and enable yahoo entrypoint of the `reporter` service in `docker-compose.yml`
+
+```yaml
+entrypoint:
+  ["/bin/sh", "-c", "cd /usr/local/blocksense/oracles/yahoo && /spin up"]
+```
+
+Start docker compose again. That will start 2 anvil instances, one sequencer and a yahoo reporter
+
+```bash
+  docker compose down # if you have already running containers
+  docker compose up
+```
 
 If everything is setup correctly you will see anvil reporting published transactions:
 
-  
-
+```bash
+  docker compose logs anvil-a
 ```
+
+```log
 
 anvil-a-1 | Genesis Timestamp
 
@@ -163,56 +192,55 @@ anvil-a-1 |
 
 ```
 
-  
-
-### Using a similar approach you can use CoinMarketCap wasm repoter
-
-  
-
-To run wasm yahoo repoter you need to build it:
-
-`cd examples/cmc && cargo build --target wasm32-wasi --release`
-
-  
+### Using a similar approach you can use CoinMarketCap wasm reporter
 
 Add CoinMarketCap key from this registration
 
-  
-
 Register at https://coinmarketcap.com/api/pricing/ and paste API key in this directory in file
 
-  
+`examples/cmc/spin.toml` in section:
 
-`examples/cmc/spin.toml`
+```toml
+[[trigger.oracle.capabilities]]
+data = "00000000-0000-0000-0000-000000000000"
+id = "CMC_API_KEY"
+```
 
-  
+Now build the cmc reporter:
 
-Enable yahoo entrypoint in docker-compose.yml
+```bash
+cd examples/cmc && cargo update && cargo build --target wasm32-wasi --release
+```
 
-`entrypoint: ['/bin/sh', '-c', 'cd /usr/local/blocksense/oracles/cmc && /spin up']`
+Again at the `reporter` service in `docker-compose.yml` enable the cmc entrypoint
 
-  
+```yaml
+entrypoint:
+  ["/bin/sh", "-c", "cd /usr/local/blocksense/oracles/cmc && /spin up"]
+```
 
-Start docker compose which start 2 anvil instances, one sequencer and yahoo reporter
+You can now start docker compose again.
 
-`docker compose up`
-
-  
+```bash
+  docker compose down # if you have already running containers
+  docker compose up
+```
 
 If everything is setup correctly you will see anvil reporting published transactions.
-
-  
 
 ## Creating your own new Oracle Script
 
 This is the main task of this hackaton - to create your oracle script, feed data to the blockchain and do something interesting or useful with it. To achieve your goal we suggest to use copy-paste-edit strategy with one of our existing oracles.
 
 For example:
-`cd examples && cp -r revolut my_oracle`
+
+```bash
+cd examples && cp -r revolut my_oracle
+```
 
 edit `my_oracle/spin.toml`:
 
-```
+```toml
 spin_manifest_version = 2
 
 [application]
@@ -240,14 +268,15 @@ data = "USD/BTC"
 [component.your-awesome-script]
 source = "target/wasm32-wasi/release/my-awesome-oracle.wasm"
 allowed_outbound_hosts = [
-  "https://awesome-data-feed.com",
+"https://awesome-data-feed.com",
 ]
 [component.your-awesome-script.build]
 command = "cargo build --target wasm32-wasi --release"
 ```
 
 Edit `my_oracle/Cargo.toml`:
-```
+
+```toml
 [package]
 name = "my-awesome-oracle"
 authors = ["Your name"]
@@ -265,25 +294,27 @@ anyhow = "1.0.82"
 serde_json = "1.0"
 url = "2.5"
 serde = { version = "1.0", features = ["derive"] }
+
 # Add extra dependencies here, if needed
+
 ```
 
-If you need a new data feed for your application you can appended to 
+If you need a new data feed for your application you can appended to
 `config/feed_config.json`
 
-```
+```json
     {
-      "id": 47, # Pick some ID that is not occupied, or you can reuse existing one
-      "name": "ETH",
+      "id": 1000, # Pick some ID that is not occupied, or you can reuse existing one
+      "name": "MyToken",
       "fullName": "",
-      "description": "ETH / USD",
+      "description": "MyToken / USD",
       "decimals": 8,
       "report_interval_ms": 30000,
       "quorum_percentage": 1, # Leave unchannged
       "type": "Crypto",
       "script": "CoinMarketCap",
       "pair": {
-        "base": "ETH",
+        "base": "MyToken",
         "quote": "USD"
       },
       "first_report_start_time": {
@@ -291,15 +322,17 @@ If you need a new data feed for your application you can appended to
         "nanos_since_epoch": 0
       },
       "resources": {
-        "cmc_id": 1027,
-        "cmc_quote": "ETH"
+        "cmc_id": 123456,
+        "cmc_quote": "MyToken"
       }
     },
 ```
+
 Write the code for your oracle and build it.
 
-Edit `docker-compose` to start your oracle script:
-```
+Edit `docker-compose.yaml` to start your oracle script:
+
+```yaml
   reporter:
     image: ymadzhunkov/blocksense_hackaton:reporter
     networks:
@@ -309,16 +342,15 @@ Edit `docker-compose` to start your oracle script:
       - ./examples/revolut:/usr/local/blocksense/oracles/revolut
       - ./examples/cmc:/usr/local/blocksense/oracles/cmc
       - ./examples/my_oracle:/usr/local/blocksense/oracles/my_oracle
-    entrypoint: ['/bin/sh', '-c', 'cd /usr/local/blocksense/oracles/my_oracle && /spin up']
-
+entrypoint: ['/bin/sh', '-c', 'cd /usr/local/blocksense/oracles/my_oracle && /spin up']
     depends_on:
       sequencer:
         condition: service_healthy
-``` 
-
+```
 
 Restart the entire setup:
 
-`docker compose down`
-
-`docker compose up`
+```bash
+docker compose down
+docker compose up
+```
