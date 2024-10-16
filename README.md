@@ -228,6 +228,55 @@ You can now start docker compose again.
 
 If everything is setup correctly you will see anvil reporting published transactions.
 
+## Reading on-chain data
+
+Once having all set up and running you can read the data from the blockchain.
+For more information of how our Smart Contracts work navigate to the [Blocksense Smart Contract Documentation](https://docs.blocksense.network/docs/contracts)
+
+There is a couple of ways to read the data from the blockchain. As mentioned above, we have anvil instances running, which are local Ethereum blockchains. We deploy our smart contracts on these blockchains and we can interact with them using different tools.
+
+### Using `cast`
+
+One approach could be to use the `cast` tool. `cast` is a command line tool that allows you to interact with the blockchain. You can find more information about it [here](https://book.getfoundry.sh/cast/).
+
+Here is an example of how to use `cast` to read the data from the blockchain:
+```bash
+cast call 0xc04b335A75C5Fa14246152178f6834E3eBc2DC7C --data 0x8000001f --rpc-url http://127.0.0.1:8545 |  cut -c1-50 | cast to-dec
+```
+
+Lets break down the command:
+
+1. We make a call to the contract with address `0xc04b335A75C5Fa14246152178f6834E3eBc2DC7C`. This is our [UpgradeableProxy](https://docs.blocksense.network/docs/contracts/reference-documentation/UpgradeableProxy) contract.
+
+2. We pass the data `0x8000001f` to the contract. This way you interact with the `fallback` function of the `UpgradeableProxy` contract. More info on this can be found [here](https://docs.blocksense.network/docs/contracts#call-handling-mechanism). This call allows us to read the latest price and timestamp. One question you might have at this point is how to craft this selector. In one handy way is to use `node repl` or `js` as follows:
+
+```javascript
+const id = 31
+const selector = '0x' + ((id | 0x80000000) >>> 0).toString(16).padStart(8, '0');
+console.log(selector)
+// '0x8000001f'
+```
+Note that the `id` is the id of the data feed you want to read data for. In this case with id 31 we are reading the price of `BTC/USD` data feed. You can confirm that by navigating to `config/feed_config.json` file or in the `spin.toml` file of any oracle script.
+
+3. We pass the `rpc-url` of the anvil instance we want to interact with. In this case we are using the first anvil instance.
+
+4. We pipe the output to `cut` to get only the first 50 characters of the output. This is because they refer to the price itself. The output is in hex format and we want to convert it to decimal. We can do that by piping the output to `cast to-dec`.
+
+Expected result must be something like `67260166034648270000000` which is the price of BTC/USD in the moment of the call.
+
+> Note: Potential issues
+>
+> - If the result is 0 that means the reporter is not running correctly.
+> - If you receive an error that could be due to the fact that the smart contract is not deployed on the blockchain.
+
+### Using `ethers.js`
+
+We have examples for interacting with `UpgradeableProxy` contract using `ethers.js` [here](https://docs.blocksense.network/docs/contracts/integration-guide/using-data-feeds/historic-data-feed#ethersjs-v6x).
+
+### Using `solidity`
+
+We have examples for interacting with `UpgradeableProxy` contract using `solidity` [here](https://docs.blocksense.network/docs/contracts/integration-guide/using-data-feeds/historic-data-feed#solidity).
+
 ## Creating your own new Oracle Script
 
 This is the main task of this hackaton - to create your oracle script, feed data to the blockchain and do something interesting or useful with it. To achieve your goal we suggest to use copy-paste-edit strategy with one of our existing oracles.
