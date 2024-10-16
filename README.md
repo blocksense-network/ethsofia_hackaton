@@ -315,3 +315,10 @@ Edit `docker-compose` to start your oracle script:
       sequencer:
         condition: service_healthy
 ``` 
+
+
+Restart the entire setup:
+
+`docker compose down`
+
+`docker compose up`
