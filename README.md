@@ -240,6 +240,7 @@ There is a couple of ways to read the data from the blockchain. As mentioned abo
 One approach could be to use the `cast` tool. `cast` is a command line tool that allows you to interact with the blockchain. You can find more information about it [here](https://book.getfoundry.sh/cast/).
 
 Here is an example of how to use `cast` to read the data from the blockchain:
+
 ```bash
 cast call 0xc04b335A75C5Fa14246152178f6834E3eBc2DC7C --data 0x8000001f --rpc-url http://127.0.0.1:8545 |  cut -c1-50 | cast to-dec
 ```
@@ -251,11 +252,12 @@ Lets break down the command:
 2. We pass the data `0x8000001f` to the contract. This way you interact with the `fallback` function of the `UpgradeableProxy` contract. More info on this can be found [here](https://docs.blocksense.network/docs/contracts#call-handling-mechanism). This call allows us to read the latest price and timestamp. One question you might have at this point is how to craft this selector. In one handy way is to use `node repl` or `js` as follows:
 
 ```javascript
-const id = 31
-const selector = '0x' + ((id | 0x80000000) >>> 0).toString(16).padStart(8, '0');
-console.log(selector)
+const id = 31;
+const selector = "0x" + ((id | 0x80000000) >>> 0).toString(16).padStart(8, "0");
+console.log(selector);
 // '0x8000001f'
 ```
+
 Note that the `id` is the id of the data feed you want to read data for. In this case with id 31 we are reading the price of `BTC/USD` data feed. You can confirm that by navigating to `config/feed_config.json` file or in the `spin.toml` file of any oracle script.
 
 3. We pass the `rpc-url` of the anvil instance we want to interact with. In this case we are using the first anvil instance.
@@ -353,7 +355,7 @@ If you need a new data feed for your application you can appended to
 
 ```json
     {
-      "id": 1000, # Pick some ID that is not occupied, or you can reuse existing one
+      "id": 42, # Pick some ID that is not occupied, or you can reuse existing one ( but let it be between 0 and 257 )
       "name": "MyToken",
       "fullName": "",
       "description": "MyToken / USD",
