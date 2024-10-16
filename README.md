@@ -203,127 +203,115 @@ If everything is setup correctly you will see anvil reporting published transact
 
   
 
-## Adding a new Oracle Script
+## Creating your own new Oracle Script
 
-  
+This is the main task of this hackaton - to create your oracle script, feed data to the blockchain and do something interesting or useful with it. To achieve your goal we suggest to use copy-paste-edit strategy with one of our existing oracles.
 
-To create an oracle script you must create a new Rust project with cargo
+For example:
+`cd examples && cp -r revolut my_oracle`
 
-  
-
-```cargo new --lib my_oracle```
-
-  
-
-Open `./my_oracle/Cargo.toml` and under `[lib]` add the crate type - `crate-type = ["cdylib"]`
-
-  
-
-the following two dependencies should be included -
+edit `my_oracle/spin.toml`:
 
 ```
+spin_manifest_version = 2
 
-wit-bindgen = "0.16.0"
-
-blocksense-sdk = { git = "https://github.com/blocksense-network/sdk.git" }
-
-```
-
-  
-
-After this your Cargo.toml should look like this -
-
-  
-
-```
-
-[package]
-
-name = "my_oracle"
-
-authors = ["Participant"]
-
-description = ""
-
+[application]
+authors = ["Your names"]
+name = "Blocksense Oracle Hackaton"
 version = "0.1.0"
 
+[application.trigger.settings]
+interval_time_in_seconds = 10 # reporting interval in seconds. Adjust if necessary
+sequencer = "http://sequencer:8877/post_report"
+secret_key = "536d1f9d97166eba5ff0efb8cc8dbeb856fb13d2d126ed1efc761e9955014003"
+reporter_id = 0
+
+[[trigger.oracle]]
+component = "your-awesome-script"
+
+[[trigger.oracle.data_feeds]]
+id = "47" #UPDATE DATA FEEDS IF NEEDED
+data = "USD/ETH"
+
+[[trigger.oracle.data_feeds]]
+id = "31"
+data = "USD/BTC"
+
+[component.your-awesome-script]
+source = "target/wasm32-wasi/release/my-awesome-oracle.wasm"
+allowed_outbound_hosts = [
+  "https://awesome-data-feed.com",
+]
+[component.your-awesome-script.build]
+command = "cargo build --target wasm32-wasi --release"
+```
+
+Edit `my_oracle/Cargo.toml`:
+```
+[package]
+name = "my-awesome-oracle"
+authors = ["Your name"]
+description = ""
+version = "0.1.0"
 edition = "2021"
 
-  
-
 [lib]
-
 crate-type = ["cdylib"]
 
-  
-
 [dependencies]
-
 wit-bindgen = "0.16.0"
-
 blocksense-sdk = { git = "https://github.com/blocksense-network/sdk.git" }
-
+anyhow = "1.0.82"
+serde_json = "1.0"
+url = "2.5"
+serde = { version = "1.0", features = ["derive"] }
+# Add extra dependencies here, if needed
 ```
 
-  
-
-in the command-line use `cargo add` to add new libraries in your project.
-
-  
-
-## Building a new Oracle Script
-
-  
-
-Once you create your script to build the project run -
-
-  
-
-`cargo update && cargo build --target wasm32-wasi --release`
-
-  
-
-To make your project visible in the docker container open `docker-compose.yml` in the root of the project
-
-  
-
-include your new oracle script in the reporter section with the correct path, it should look like this -
-
-  
+If you need a new data feed for your application you can appended to 
+`config/feed_config.json`
 
 ```
-
-reporter:
-
-image: ymadzhunkov/blocksense_hackaton:reporter
-
-networks:
-
-- backend
-
-volumes:
-
-- ./examples/my_oracle:/usr/local/blocksense/oracles/my_oracle
-
-entrypoint: ['/bin/sh', '-c', 'cd /usr/local/blocksense/oracles/my_oracle && /spin up']
-
-  
-
-depends_on:
-
-sequencer:
-
-condition: service_healthy
-
+    {
+      "id": 47, # Pick some ID that is not occupied, or you can reuse existing one
+      "name": "ETH",
+      "fullName": "",
+      "description": "ETH / USD",
+      "decimals": 8,
+      "report_interval_ms": 30000,
+      "quorum_percentage": 1, # Leave unchannged
+      "type": "Crypto",
+      "script": "CoinMarketCap",
+      "pair": {
+        "base": "ETH",
+        "quote": "USD"
+      },
+      "first_report_start_time": {
+        "secs_since_epoch": 0,
+        "nanos_since_epoch": 0
+      },
+      "resources": {
+        "cmc_id": 1027,
+        "cmc_quote": "ETH"
+      }
+    },
 ```
+Write the code for your oracle and build it.
 
-  
+Edit `docker-compose` to start your oracle script:
+```
+  reporter:
+    image: ymadzhunkov/blocksense_hackaton:reporter
+    networks:
+      - backend
+    volumes:
+      - ./examples/yahoo:/usr/local/blocksense/oracles/yahoo
+      - ./examples/revolut:/usr/local/blocksense/oracles/revolut
+      - ./examples/cmc:/usr/local/blocksense/oracles/cmc
+      - ./examples/my_oracle:/usr/local/blocksense/oracles/my_oracle
+    entrypoint: ['/bin/sh', '-c', 'cd /usr/local/blocksense/oracles/my_oracle && /spin up']
 
-After that run `docker compose up` to launch the system.
-
-  
-
-If you've made any changes to the script you need to rebuild the wasm binaries before launching -
-
- 
-`cargo build --target wasm32-wasi --release && docker compose up`save it to another location. 
+    depends_on:
+      sequencer:
+        condition: service_healthy
+``` 
