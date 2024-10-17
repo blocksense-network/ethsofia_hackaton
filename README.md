@@ -40,7 +40,7 @@ Your first goal is to run one of our oracle script to verify all services are ru
 To run wasm revolut reporter you need to build it:
 
 ```bash
-cd examples/revolut && cargo update && cargo build --target wasm32-wasi --release`
+cd examples/revolut && cargo update && cargo build --target wasm32-wasi --release
 ```
 
 Now go to root directory of this repository and start all the containers:
