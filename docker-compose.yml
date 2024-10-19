@@ -1,8 +1,9 @@
 name: blocksense-hackaton
 services:
   anvil-a:
-    image: ghcr.io/foundry-rs/foundry:nightly-0688b5ad19a637303c038d1a66aec62a73713e20
+    image: ghcr.io/foundry-rs/foundry:nightly-0688b5ad19a637303c038d1a66aec62a73713e20 
     entrypoint: [ 'sh', '-c', 'anvil -p 8545 --host 0.0.0.0 --fork-url "wss://ethereum-sepolia-rpc.publicnode.com" --chain-id 99999999999' ]
+      #entrypoint: [ 'sh', '-c', 'anvil -p 8545 --host 0.0.0.0 --fork-url "wss://polygon-amoy-bor-rpc.publicnode.com" --chain-id 99999999999' ]
 
     ports:
       - '8545:8545'
@@ -15,8 +16,9 @@ services:
       retries: 1
 
   anvil-b:
-    image: ghcr.io/foundry-rs/foundry:nightly-0688b5ad19a637303c038d1a66aec62a73713e20
+    image: ghcr.io/foundry-rs/foundry:nightly-0688b5ad19a637303c038d1a66aec62a73713e20 
     entrypoint: [ 'sh', '-c', 'anvil -p 8546 --host 0.0.0.0 --fork-url "wss://ethereum-sepolia-rpc.publicnode.com" --chain-id 99999999999' ]
+      #entrypoint: [ 'sh', '-c', 'anvil -p 8546 --host 0.0.0.0 --fork-url "wss://polygon-amoy-bor-rpc.publicnode.com" --chain-id 99999999999' ]
     ports:
       - '8546:8546'
     networks:

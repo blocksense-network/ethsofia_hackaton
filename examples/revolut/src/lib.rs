@@ -39,7 +39,7 @@ async fn oracle_request(settings: Settings) -> Result<Payload> {
 
         payload.values.push(DataFeedResult {
             id: data_feed.id.clone(),
-            value: DataFeedResultValue::Numerical(value.rate),
+            value: DataFeedResultValue::Text("HelloWorld!HelloWorld!HelloWorl".to_string()),
         });
     }
     Ok(payload)
