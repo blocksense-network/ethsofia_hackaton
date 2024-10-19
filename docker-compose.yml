@@ -30,7 +30,7 @@ services:
       retries: 1
 
   sequencer:
-    image: ymadzhunkov/blocksense_hackaton:sequencer
+    image: ymadzhunkov/blocksense_hackaton:sequencer-p1
     ports:
       - '8877:8877'
       - '5555:5555'
